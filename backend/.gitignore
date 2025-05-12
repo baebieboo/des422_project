@@ -1,0 +1,31 @@
+# Node modules (dependencies)
+node_modules/
+
+# Environment variables (API keys, DB URL, etc.)
+.env
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Runtime data
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# Coverage directory used by tools like istanbul
+coverage/
+
+# Optional npm cache directory
+.npm/
+
+# dotenv config backups
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Supabase auto configs (ถ้ามี)
+.supabase/
