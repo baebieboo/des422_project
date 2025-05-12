@@ -1,0 +1,166 @@
+/* Home */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: Arial, sans-serif;
+  background-color: #006400; /* Green background */
+}
+
+/* Home container */
+.home-container {
+  display: flex;
+  justify-content: space-between; /* รูปภาพทางขวาและเนื้อหาทางซ้าย */
+  height: 100vh; /* พื้นที่สูงสุดของหน้า */
+  padding: 20px;
+  flex-wrap: wrap; /* Makes the layout responsive */
+}
+
+/* Header ที่มีสีชมพู */
+.home-header {
+  width: 100%;
+  background-color: #FF69B4; /* สีชมพู */
+  padding: 15px;
+  position: fixed; /* ทำให้ header อยู่ด้านบน */
+  top: 0;
+  left: 0;
+  display: flex; /* ปุ่มทางซ้ายขวา */
+  justify-content: space-between; /* ปุ่มทางซ้ายขวา */
+  align-items: center; /* ปุ่มทางซ้ายขวา */
+  z-index: 1000; /* Ensure header stays on top */
+}
+
+/* Left-side navbar links */
+.navbar-left {
+  display: flex;
+  justify-content: flex-start;
+  gap: 20px;
+  font-size: 18px;
+}
+
+.navbar-left a {
+  color: white;
+  text-decoration: none;
+}
+
+.navbar-left a:hover {
+  text-decoration: underline;
+}
+
+/* Right-side navbar links */
+.navbar-right a {
+  color: white;
+  font-size: 18px;
+  text-decoration: none;
+  margin-left: 15px;
+}
+
+.navbar-right a:hover {
+  text-decoration: underline;
+}
+
+/* Main content area */
+.home-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 20px;
+  color: white;
+  text-align: left; /* ข้อความจัดให้ซ้าย */
+  margin-top: 70px; /* Ensure content doesn't overlap with fixed header */
+}
+
+.home-content h1 {
+  font-size: 3rem;
+  margin-bottom: 10px;
+}
+
+.home-content p {
+  font-size: 1.5rem;
+  margin-bottom: 20px;
+}
+
+.home-content .btn-login,
+.home-content .btn-signup {
+  padding: 15px;
+  margin-top: 10px;
+  background-color: #ff69b4; /* สีชมพู */
+  border: none;
+  color: white;
+  font-size: 18px;
+  cursor: pointer;
+  border-radius: 5px;
+  text-decoration: none;
+  display: inline-block;
+}
+
+.home-content .btn-login:hover,
+.home-content .btn-signup:hover {
+  background-color: #e55a96; /* Darker pink */
+}
+
+/* Right side image */
+.home-image-container {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.home-image {
+  max-width: 100%;
+  height: auto;
+  max-width: 600px;
+  border-radius: 10px;
+}
+
+/* Mobile Responsiveness */
+@media (max-width: 768px) {
+  .home-container {
+    flex-direction: column;
+  }
+
+  .home-header {
+    flex-direction: column;
+    padding: 10px;
+  }
+
+  .navbar-left,
+  .navbar-right {
+    gap: 10px;
+    font-size: 16px;
+  }
+
+  .home-content h1 {
+    font-size: 2.5rem;
+  }
+
+  .home-content p {
+    font-size: 1.25rem;
+  }
+
+  .home-image {
+    max-width: 100%;
+    height: auto;
+  }
+}
+
+/* Q&A */
+.qa-item {
+  margin-top: 50px; /* เพิ่มระยะห่างจากด้านบน */
+  padding: 20px;
+  color: white;
+}
+
+/* Contact Us */
+.contact-container {
+  margin-top: 100px; /* ความสูงของ header + เว้นระยะ */
+  padding: 1rem 2rem;
+  max-width: 600px;
+  margin-left: auto;
+  margin-right: auto;
+}
