@@ -1,3 +1,4 @@
+// src/pages/MyInvites.js
 import React, { useEffect, useState, useCallback } from 'react';
 
 function MyInvites() {
@@ -6,7 +7,6 @@ function MyInvites() {
   const [selectedInvite, setSelectedInvite] = useState(null);
   const [availableSlots, setAvailableSlots] = useState([]);
   const [selectedTimes, setSelectedTimes] = useState([]);
-  const [showModal, setShowModal] = useState(false);  // For showing the modal
 
   const fetchInvites = useCallback(async () => {
     try {
@@ -17,6 +17,7 @@ function MyInvites() {
         return;
       }
       const data = await res.json();
+      console.log('📥 Invites:', data);
       setInvites(data);
     } catch (err) {
       console.error('❌ Fetch error:', err.message);
@@ -28,21 +29,25 @@ function MyInvites() {
   }, [currentUser?.id, fetchInvites]);
 
   const toggleTime = (t) => {
-    setSelectedTimes(prev =>
+    setSelectedTimes(prev => (
       prev.includes(t) ? prev.filter(x => x !== t) : [...prev, t]
-    );
+    ));
   };
 
   const respond = async (meeting_id, status) => {
     if (status === 'accepted') {
-      setSelectedInvite(meeting_id);
       try {
         const res = await fetch(`/api/invite/slots/${meeting_id}`);
+        if (!res.ok) {
+          const err = await res.text();
+          console.error('❌ Failed to fetch slots:', err);
+          return;
+        }
         const slots = await res.json();
+        setSelectedInvite(meeting_id);
         setAvailableSlots(slots);
-        setShowModal(true); // Show the modal when slots are fetched
       } catch (err) {
-        console.error('❌ Error fetching available slots:', err.message);
+        console.error('❌ Error loading slots:', err.message);
       }
     } else {
       await sendResponse(meeting_id, status);
@@ -50,67 +55,56 @@ function MyInvites() {
   };
 
   const sendResponse = async (meeting_id, status) => {
-    const res = await fetch('/api/invite/respond', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ meeting_id, user_id: currentUser.id, status })
-    });
+    try {
+      const res = await fetch('/api/invite/respond', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ meeting_id, user_id: currentUser.id, status })
+      });
 
-    if (res.ok) {
-      await fetchInvites(); // Refresh invite list after accept/decline
-      setSelectedInvite(null);
-      setSelectedTimes([]);
-    } else {
-      const err = await res.json();
-      alert("❌ " + err.error);
+      const result = await res.json();
+
+      if (res.ok) {
+        alert(result.message);
+        await fetchInvites(); // รีโหลดใหม่
+        setSelectedInvite(null);
+        setSelectedTimes([]);
+      } else {
+        alert("❌ Error: " + result.error);
+      }
+    } catch (err) {
+      alert("❌ Network error: " + err.message);
     }
   };
 
   const submitAvailability = async () => {
-  try {
-    const res = await fetch('/api/invitee/update-availability', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        meeting_id: selectedInvite,
-        invitee_id: currentUser.id,
-        time_ranges: selectedTimes,
-      }),
-    });
-
-    if (res.ok) {
-      // ✅ After saving availability, mark invite as accepted
-      await sendResponse(selectedInvite, 'accepted');
-      setShowModal(false);  // Close modal
-    } else {
-      const err = await res.json();
-      alert("❌ " + err.error);
-    }
-    } catch (error) {
-      console.error("❌ Error submitting availability:", error);
-      alert("❌ Something went wrong.");
-    }
-  };
-
-
-  const removeInvite = (meeting_id) => {
-    setInvites(prev => prev.filter(invite => invite.meeting_id !== meeting_id));
-  };
-
-  // Handle accepting and declining the proposed time
-  const handleModalResponse = async (status) => {
-    if (status === 'accepted') {
-      await submitAvailability(); // This will also call sendResponse and refresh
-    } else {
-      await sendResponse(selectedInvite, 'declined');
-      removeInvite(selectedInvite);
-      setShowModal(false);
+    if (!selectedInvite || selectedTimes.length === 0) {
+      alert("Please select at least one time slot");
+      return;
     }
 
-    setSelectedInvite(null);
-    setSelectedTimes([]);
-  };
+    try {
+      const res = await fetch('/api/invite/availability', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          meeting_id: selectedInvite,
+          invitee_id: currentUser.id,
+          time_ranges: selectedTimes
+        })
+      });
 
+      const result = await res.json();
+
+      if (res.ok) {
+        await sendResponse(selectedInvite, 'accepted');
+      } else {
+        alert("❌ Failed to save availability: " + result.error);
+      }
+    } catch (err) {
+      alert("❌ Network error: " + err.message);
+    }
+  };
 
   return (
     <div style={{ padding: '20px' }}>
@@ -125,21 +119,22 @@ function MyInvites() {
             <p><b>Meeting:</b> {invite.meeting_title}</p>
             <p><b>Date:</b> {invite.date}</p>
             <p><b>Note:</b> {invite.note}</p>
-            <button onClick={() => { respond(invite.meeting_id, 'accepted'); removeInvite(invite.meeting_id); }} style={{ marginRight: 10 }}>✅ Accept</button>
-            <button onClick={() => { respond(invite.meeting_id, 'declined'); removeInvite(invite.meeting_id); }}>❌ Decline</button>
+            <button onClick={() => respond(invite.meeting_id, 'accepted')} style={{ marginRight: 10 }}>✅ Accept</button>
+            <button onClick={() => respond(invite.meeting_id, 'declined')}>❌ Decline</button>
           </div>
         ))
       )}
 
-      {showModal && selectedInvite && (
+      {selectedInvite && availableSlots.length > 0 && (
         <div style={{ marginTop: 30, borderTop: '1px solid #ccc', paddingTop: 20 }}>
-          <h3>Selected Available Times</h3>
+          <h3>Select Available Time</h3>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
             {availableSlots.map(h => (
               <button
                 key={h}
+                onClick={() => toggleTime(h)}
                 style={{
-                  backgroundColor: '#e5e7eb',
+                  backgroundColor: selectedTimes.includes(h) ? '#86efac' : '#e5e7eb',
                   padding: '6px 12px',
                   borderRadius: '6px'
                 }}
@@ -149,8 +144,8 @@ function MyInvites() {
             ))}
           </div>
           <div style={{ marginTop: '15px' }}>
-            <button onClick={() => handleModalResponse('accepted')} style={{ marginRight: '10px' }}>Accept</button>
-            <button onClick={() => handleModalResponse('declined')}>Decline</button>
+            <button onClick={submitAvailability} style={{ marginRight: '10px' }}>Submit</button>
+            <button onClick={() => { setSelectedInvite(null); setSelectedTimes([]); }}>Cancel</button>
           </div>
         </div>
       )}
