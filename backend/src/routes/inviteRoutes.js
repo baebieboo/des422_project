@@ -118,4 +118,19 @@ router.get('/accepted/:user_id', async (req, res) => {
   res.json(formatted);
 });
 
+// 6. GET existing responses for invitee
+router.get('/responses/:meeting_id/:user_id', async (req, res) => {
+  const { meeting_id, user_id } = req.params;
+
+  const { data, error } = await supabase
+    .from('invitee_time_responses')
+    .select('time_range')
+    .eq('meeting_id', meeting_id)
+    .eq('invitee_id', user_id);
+
+  if (error) return res.status(500).json({ error: error.message });
+
+  res.json(data.map(d => d.time_range));
+});
+
 module.exports = router;

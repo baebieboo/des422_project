@@ -35,15 +35,19 @@ function MyInvites() {
   };
 
   const respond = async (meeting_id, status) => {
+    console.log("👉 Responding to", meeting_id, status);
     if (status === 'accepted') {
       try {
         const res = await fetch(`/api/invite/slots/${meeting_id}`);
+        const text = await res.text();
+        console.log("👉 Fetched slots response:", text);
+
         if (!res.ok) {
-          const err = await res.text();
-          console.error('❌ Failed to fetch slots:', err);
+          console.error("❌ Failed to fetch slots:", text);
           return;
         }
-        const slots = await res.json();
+
+        const slots = JSON.parse(text);
         setSelectedInvite(meeting_id);
         setAvailableSlots(slots);
       } catch (err) {
@@ -66,7 +70,7 @@ function MyInvites() {
 
       if (res.ok) {
         alert(result.message);
-        await fetchInvites(); // รีโหลดใหม่
+        await fetchInvites();
         setSelectedInvite(null);
         setSelectedTimes([]);
       } else {
