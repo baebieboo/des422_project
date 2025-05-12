@@ -1,3 +1,6 @@
+require('dotenv').config(); // ✅ โหลด .env ให้ใช้ได้กับไฟล์นี้
+
+
 const { createClient } = require('@supabase/supabase-js');
 const { config } = require('./config');
 
