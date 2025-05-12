@@ -51,25 +51,43 @@ router.get('/slots/:meeting_id', async (req, res) => {
 });
 
 // 3. POST respond to invite
+// 3. POST respond to invite
 router.post('/respond', async (req, res) => {
   const { meeting_id, user_id, status } = req.body;
   if (!['accepted', 'declined'].includes(status)) {
     return res.status(400).json({ error: 'Invalid status' });
   }
 
-  const { data, error } = await supabase
-  .from('meeting_invites')
-  .select(`
-    meeting_id,
-    status,
-    meetings(title, date, note, creator_id),
-    profiles(email)
-  `)
-  .eq('invitee_id', user_id)
-  .eq('status', 'pending');
+  try {
+    // Update the invite status to 'accepted' or 'declined'
+    const { error } = await supabase
+      .from('meeting_invites')
+      .update({ status })
+      .eq('meeting_id', meeting_id)
+      .eq('invitee_id', user_id);
 
-  if (error) return res.status(500).json({ error: error.message });
-  res.json({ message: `✅ Invitation ${status}` });
+    if (error) {
+      throw error;
+    }
+
+    // If declined, remove the invite from the database
+    if (status === 'declined') {
+      const { error: deleteError } = await supabase
+        .from('meeting_invites')
+        .delete()
+        .eq('meeting_id', meeting_id)
+        .eq('invitee_id', user_id);
+
+      if (deleteError) {
+        throw deleteError;
+      }
+    }
+
+    res.json({ message: `✅ Invitation ${status}` });
+  } catch (err) {
+    console.error('❌ Error responding to invite:', err.message);
+    res.status(500).json({ error: 'Failed to respond to invite' });
+  }
 });
 
 // 4. POST submit availability
@@ -122,5 +140,7 @@ router.get('/accepted/:user_id', async (req, res) => {
 
   res.json(formatted);
 });
+
+
 
 module.exports = router;
