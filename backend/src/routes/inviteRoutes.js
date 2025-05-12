@@ -50,7 +50,7 @@ router.get('/slots/:meeting_id', async (req, res) => {
   res.json(data.map(s => s.time_range));
 });
 
-// 3. POST respond to invite
+
 // 3. POST respond to invite
 router.post('/respond', async (req, res) => {
   const { meeting_id, user_id, status } = req.body;

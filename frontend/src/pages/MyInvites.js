@@ -67,45 +67,50 @@ function MyInvites() {
   };
 
   const submitAvailability = async () => {
-    if (!selectedInvite || selectedTimes.length === 0) {
-      alert("Please select at least one time slot");
-      return;
-    }
-
-    const res = await fetch('/api/invite/availability', {
+  try {
+    const res = await fetch('/api/invitee/update-availability', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         meeting_id: selectedInvite,
         invitee_id: currentUser.id,
-        time_ranges: selectedTimes
-      })
+        time_ranges: selectedTimes,
+      }),
     });
 
-    const result = await res.json();
     if (res.ok) {
+      // ✅ After saving availability, mark invite as accepted
       await sendResponse(selectedInvite, 'accepted');
+      setShowModal(false);  // Close modal
     } else {
-      alert("❌ " + result.error);
+      const err = await res.json();
+      alert("❌ " + err.error);
+    }
+    } catch (error) {
+      console.error("❌ Error submitting availability:", error);
+      alert("❌ Something went wrong.");
     }
   };
+
 
   const removeInvite = (meeting_id) => {
     setInvites(prev => prev.filter(invite => invite.meeting_id !== meeting_id));
   };
 
   // Handle accepting and declining the proposed time
-  const handleModalResponse = (status) => {
+  const handleModalResponse = async (status) => {
     if (status === 'accepted') {
-      // Add the selected time slot to the calendar here
-      // You can handle this by calling another API or updating state
-      alert("Appointment added to calendar!");
+      await submitAvailability(); // This will also call sendResponse and refresh
+    } else {
+      await sendResponse(selectedInvite, 'declined');
+      removeInvite(selectedInvite);
+      setShowModal(false);
     }
 
-    setShowModal(false); // Close the modal
     setSelectedInvite(null);
     setSelectedTimes([]);
   };
+
 
   return (
     <div style={{ padding: '20px' }}>
