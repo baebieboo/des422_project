@@ -1,17 +1,32 @@
 import React, { useState, useEffect } from 'react';
 import dayjs from 'dayjs';
 
+const hours = [
+  '6 AM - 7 AM', '7 AM - 8 AM', '8 AM - 9 AM',
+  '9 AM - 10 AM', '10 AM - 11 AM', '11 AM - 12 PM',
+  '1 PM - 2 PM', '2 PM - 3 PM', '3 PM - 4 PM',
+  '4 PM - 5 PM', '5 PM - 6 PM'
+];
+
 const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 
 function CalendarPage() {
   const currentUser = JSON.parse(localStorage.getItem('user'));
   const [selectedMonth, setSelectedMonth] = useState(dayjs().month());
   const [selectedYear] = useState(dayjs().year());
+
   const [availableTimes, setAvailableTimes] = useState([]);
   const [acceptedMeetings, setAcceptedMeetings] = useState([]);
   const [editing, setEditing] = useState(null);
   const [selectedTimes, setSelectedTimes] = useState([]);
+  // eslint-disable-next-line no-unused-vars
   const [availableSlots, setAvailableSlots] = useState([]);
+
+  const [creating, setCreating] = useState(false);
+  const [createDate, setCreateDate] = useState(null);
+  const [title, setTitle] = useState('');
+  const [note, setNote] = useState('');
+  const [collab, setCollab] = useState([]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -60,11 +75,7 @@ function CalendarPage() {
     setEditing({ meeting_id, date });
   };
 
-  const toggleTime = (t) => {
-    setSelectedTimes(prev => prev.includes(t) ? prev.filter(x => x !== t) : [...prev, t]);
-  };
-
-  const handleSave = async () => {
+  const handleSaveEdit = async () => {
     const res = await fetch('/api/invitee/update-availability', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -84,6 +95,47 @@ function CalendarPage() {
     }
   };
 
+  const handleCreateMeeting = (date) => {
+    setCreating(true);
+    setCreateDate(date);
+    setTitle('');
+    setNote('');
+    setCollab('');
+    setSelectedTimes([]);
+  };
+
+  const handleSaveCreate = async () => {
+    try {
+      const res = await fetch('/api/meetings/create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title,
+          date: createDate.format('YYYY-MM-DD'),
+          note,
+          collaborators: collab.split(',').map(e => e.trim()),
+          slots: selectedTimes,
+          creator_id: currentUser.id
+        })
+      });
+
+      const result = await res.json();
+      if (!res.ok) {
+        alert("❌ Failed: " + result.error);
+        return;
+      }
+
+      alert(result.message || '✅ Meeting created');
+      setCreating(false);
+    } catch (err) {
+      alert("❌ Network error: " + err.message);
+    }
+  };
+
+  const toggleTime = (t) => {
+    setSelectedTimes(prev => prev.includes(t) ? prev.filter(x => x !== t) : [...prev, t]);
+  };
+
   return (
     <div style={{ padding: 20 }}>
       <h2>📅 Calendar</h2>
@@ -98,7 +150,7 @@ function CalendarPage() {
         {getDaysInMonth().map((d, i) => {
           const dayStr = d?.format('YYYY-MM-DD');
           const accepts = acceptedMeetings.filter(m => m.date === dayStr);
-          
+
           return (
             <div key={i} style={{ border: '1px solid #ccc', minHeight: 70, borderRadius: 6, padding: 5 }}>
               {d && <>
@@ -109,17 +161,25 @@ function CalendarPage() {
                     <button style={{ fontSize: 10, marginLeft: 4 }} onClick={() => openEdit(m.meeting_id, m.date)}>Edit</button>
                   </div>
                 ))}
+                <button style={{ fontSize: 12, marginTop: 5 }} onClick={() => handleCreateMeeting(d)}>+ Create</button>
               </>}
             </div>
           );
         })}
       </div>
 
-      {editing && (
+      {(editing || creating) && (
         <div style={{ marginTop: 20, padding: 10, border: '1px solid #ccc', borderRadius: 8 }}>
-          <h3>🕐 Edit Availability ({editing.date})</h3>
-          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-            {availableSlots.map(h => (
+          <h3>{creating ? "📌 Create Meeting" : `🕐 Edit Availability (${editing.date})`}</h3>
+          {creating && (
+            <>
+              <p><b>Title:</b> <input value={title} onChange={e => setTitle(e.target.value)} /></p>
+              <p><b>Collaborators (comma separated):</b> <input value={collab} onChange={e => setCollab(e.target.value)} /></p>
+              <p><b>Note:</b><br /><textarea value={note} onChange={e => setNote(e.target.value)} /></p>
+            </>
+          )}
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+            {hours.map(h => (
               <button key={h} onClick={() => toggleTime(h)} style={{
                 backgroundColor: selectedTimes.includes(h) ? '#86efac' : '#e5e7eb',
                 borderRadius: 6, padding: '6px 12px'
@@ -129,8 +189,8 @@ function CalendarPage() {
             ))}
           </div>
           <div style={{ marginTop: 15 }}>
-            <button onClick={handleSave} style={{ marginRight: 10 }}>Save</button>
-            <button onClick={() => setEditing(null)}>Cancel</button>
+            <button onClick={creating ? handleSaveCreate : handleSaveEdit} style={{ marginRight: 10 }}>Save</button>
+            <button onClick={() => { setCreating(false); setEditing(null); }}>Cancel</button>
           </div>
         </div>
       )}
