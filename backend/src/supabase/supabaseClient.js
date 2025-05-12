@@ -8,5 +8,5 @@ if (!config.supabaseUrl || !config.supabaseServiceRoleKey) {
 }
 
 // ✅ ใช้ Service Role Key แทน anon key
-const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+const supabase = createClient(config.supabaseUrl, config.supabaseServiceRoleKey);
 module.exports = supabase;

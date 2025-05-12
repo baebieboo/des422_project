@@ -1,4 +1,5 @@
 // backend/src/server/server.js
+require('dotenv').config();
 const express = require('express');
 const contactRoutes = require('../routes/contactRoutes');
 const signupRoutes = require('../routes/signupRoutes');
