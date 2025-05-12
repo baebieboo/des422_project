@@ -1,6 +1,8 @@
 // backend/src/server/server.js
 require('dotenv').config();
+
 const express = require('express');
+const cors = require('cors'); // ✅ add this
 const contactRoutes = require('../routes/contactRoutes');
 const signupRoutes = require('../routes/signupRoutes');
 const loginRoutes = require('../routes/loginRoutes');
@@ -11,6 +13,13 @@ const inviteRoutes = require('../routes/inviteRoutes');
 const inviteAvailabilityRoutes = require('../routes/inviteAvailabilityRoutes');
 
 const app = express();
+
+// ✅ CORS middleware BEFORE any routes
+app.use(cors({
+  origin: 'https://your-frontend-name.onrender.com', // ⬅️ Replace this with your actual frontend Render URL
+  credentials: true
+}));
+
 app.use(express.json());
 
 app.use('/api/contact', contactRoutes);
