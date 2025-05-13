@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import '../App.css';
+import {api} from '../utils/api';
 
 function Login() {
   const [email, setEmail] = useState('');
@@ -12,16 +13,14 @@ function Login() {
     const loginData = { email, password };
 
     try {
-      const response = await fetch('/api/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(loginData),
-      });
+      const response = await api.post('/api/login',
+        loginData
+      );
 
       const contentType = response.headers.get('content-type');
-      if (!response.ok) {
+      if (response.status != 200) {
         if (contentType && contentType.includes('application/json')) {
-          const errorResult = await response.json();
+          const errorResult = await response.data;
           alert('❌ Login failed: ' + (errorResult.error || 'Unknown error'));
         } else {
           const text = await response.text();
@@ -30,7 +29,7 @@ function Login() {
         return;
       }
 
-      const result = await response.json();
+      const result = await response.data;
       if (!result.user) {
         alert('❌ Login response invalid.');
         return;

@@ -16,7 +16,7 @@ const app = express();
 
 // ✅ CORS middleware BEFORE any routes
 app.use(cors({
-  origin: 'https://my-react-app-wr93.onrender.com/', // ⬅️ Replace this with your actual frontend Render URL
+  origin: '*', // ⬅️ Replace this with your actual frontend Render URL
   credentials: true
 }));
 
